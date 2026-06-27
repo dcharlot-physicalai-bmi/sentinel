@@ -1,0 +1,12 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="1280" height="720" fill="#FFFFFF"/>
+<text x="80" y="84" font-family="Arial,sans-serif" font-size="44" font-weight="500" fill="#2C2C2A">Signal &#8594; meaning &#8594; decision</text>
+<text x="80" y="126" font-family="Arial,sans-serif" font-size="24" fill="#5F5E5A">each boundary compresses &#8212; the hub stays cheap</text>
+<g font-family="Arial,sans-serif">
+<rect x="120" y="200" width="220" height="340" rx="14" fill="#FAECE7" stroke="#D85A30" stroke-width="2"/><text x="230" y="362" font-size="28" font-weight="500" fill="#993C1D" text-anchor="middle">raw</text><text x="230" y="398" font-size="28" font-weight="500" fill="#993C1D" text-anchor="middle">signal</text>
+<rect x="420" y="252" width="200" height="236" rx="14" fill="#FAEEDA" stroke="#EF9F27" stroke-width="2"/><text x="520" y="380" font-size="28" font-weight="500" fill="#854F0B" text-anchor="middle">estimate</text>
+<rect x="700" y="300" width="180" height="140" rx="14" fill="#E1F5EE" stroke="#1D9E75" stroke-width="2"/><text x="790" y="378" font-size="26" font-weight="500" fill="#0F6E56" text-anchor="middle">meaning</text>
+<rect x="960" y="338" width="160" height="64" rx="14" fill="#EEEDFE" stroke="#7F77DD" stroke-width="2"/><text x="1040" y="378" font-size="24" font-weight="500" fill="#3C3489" text-anchor="middle">decision</text>
+<line x1="340" y1="370" x2="416" y2="370" stroke="#888780" stroke-width="2.5"/><polygon points="418,370 404,363 404,377" fill="#888780"/><line x1="620" y1="370" x2="696" y2="370" stroke="#888780" stroke-width="2.5"/><polygon points="698,370 684,363 684,377" fill="#888780"/><line x1="880" y1="370" x2="956" y2="370" stroke="#888780" stroke-width="2.5"/><polygon points="958,370 944,363 944,377" fill="#888780"/>
+<text x="230" y="592" font-size="22" fill="#5F5E5A" text-anchor="middle">node</text><text x="520" y="592" font-size="22" fill="#5F5E5A" text-anchor="middle">node DSP / L0</text><text x="790" y="592" font-size="22" fill="#5F5E5A" text-anchor="middle">tiles combine</text><text x="1040" y="592" font-size="22" fill="#5F5E5A" text-anchor="middle">hub decides</text>
+<text x="640" y="660" font-size="22" fill="#5F5E5A" text-anchor="middle">data volume drops orders of magnitude left to right &#8212; that is why the brain can be an $80 board</text>
+</g></svg>

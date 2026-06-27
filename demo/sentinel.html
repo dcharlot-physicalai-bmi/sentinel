@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Spatial RF — the sensing fabric</title>
+<style>
+  :root{ --bg:#0b1024; --panel:rgba(12,18,38,.82); --edge:rgba(207,170,91,.26); --ink:#eef1f8; --dim:#8aa0bd; --gold:#cfaa5b;
+    --ok:#46e0c0; --warn:#f5b13d; --bad:#ff5a52;
+    --mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace; --sans:"Inter",system-ui,sans-serif; }
+  *{box-sizing:border-box} html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:var(--sans);overflow:hidden}
+  #c{position:fixed;inset:0;display:block}
+  .hud{position:absolute;pointer-events:none;z-index:5}
+  .top{top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-start;padding:16px 18px;gap:16px}
+  .eyebrow{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);font-weight:600;margin:0 0 3px}
+  h1{margin:0;font-size:17px;font-weight:600}
+  .top p{margin:4px 0 0;font-size:12.5px;color:var(--dim);max-width:44ch;line-height:1.45}
+  .stats{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+  .stat{background:var(--panel);border:1px solid var(--edge);border-radius:12px;padding:9px 13px;min-width:120px;backdrop-filter:blur(9px)}
+  .stat .k{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+  .stat .v{font-family:var(--mono);font-size:16px;font-weight:600;margin-top:2px}
+  .legend{position:absolute;left:18px;bottom:16px;background:var(--panel);border:1px solid var(--edge);border-radius:12px;padding:11px 13px;backdrop-filter:blur(10px);z-index:5;max-width:240px}
+  .legend .h{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin:0 0 5px}
+  .legend .h.lo{margin-top:8px}
+  .legend .li{display:flex;align-items:center;gap:7px;font-size:11px;margin:2px 0}
+  .legend .d{width:9px;height:9px;border-radius:50%;box-shadow:0 0 6px currentColor;background:currentColor;flex:none}
+  .legend .cap{margin-top:9px;padding-top:8px;border-top:1px solid var(--edge);font-family:var(--mono);font-size:10px;color:var(--dim);line-height:1.6}
+  .legend .cap b{color:var(--gold)}
+  @media(max-width:760px){ .top p{display:none} .legend{display:none} }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="hud top">
+  <div>
+    <p class="eyebrow">Spatial RF · Sentinel</p>
+    <h1>A sensing fabric you can't spoof</h1>
+    <p>Fuse the whole RF spectrum, weighted by how hard each band is to forge. Low-trust bands corroborate; only high-trust bands can veto. Silence is a fault.</p>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="k">Fusion verdict</div><div class="v" id="s-v">—</div></div>
+    <div class="stat"><div class="k">Bands live</div><div class="v" id="s-b">6 / 6</div></div>
+  </div>
+</div>
+<div class="hud legend">
+  <p class="h">High trust · can veto</p>
+  <div class="li"><span class="d" style="color:#e3c77e"></span>mmWave 60 GHz · vitals/fall</div>
+  <div class="li"><span class="d" style="color:#cfaa5b"></span>C-band ~5 GHz · through-wall</div>
+  <div class="li"><span class="d" style="color:#ff9e6e"></span>UWB · authenticated ranging</div>
+  <p class="h lo">Low trust · corroborate only</p>
+  <div class="li"><span class="d" style="color:#6ea8ff"></span>Wi-Fi CSI · device-free</div>
+  <div class="li"><span class="d" style="color:#46e0c0"></span>Mesh RTI · link shadow</div>
+  <div class="li"><span class="d" style="color:#c9b3ff"></span>sub-GHz 900 MHz · perimeter</div>
+  <div class="cap"><b>Product, not sum</b> — forge every band at once, or it's caught.</div>
+</div>
+<div id="s-sub" style="position:absolute;left:50%;bottom:14px;transform:translateX(-50%);font-family:var(--mono);font-size:11px;color:var(--dim);text-align:center;max-width:88%;z-index:5;pointer-events:none"></div>
+<script>
+(function(){
+  const cv=document.getElementById('c'), x=cv.getContext('2d'); let W,H,DPR=Math.min(devicePixelRatio||1,2);
+  function size(){ W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;x.setTransform(DPR,0,0,DPR,0,0); } size(); addEventListener('resize',size);
+  const BANDS=[
+    {id:'mmwave', s:'mmWave', trust:'high', c:'#e3c77e'},
+    {id:'cband',  s:'C-band', trust:'high', c:'#cfaa5b'},
+    {id:'uwb',    s:'UWB',    trust:'high', c:'#ff9e6e'},
+    {id:'wifi',   s:'Wi-Fi',  trust:'low',  c:'#6ea8ff'},
+    {id:'mesh',   s:'Mesh',   trust:'low',  c:'#46e0c0'},
+    {id:'subghz', s:'subGHz', trust:'low',  c:'#c9b3ff'},
+  ];
+  // st per band: agree | contradict | dead | idle
+  const SCN=[
+    { name:'monitoring', sub:'all bands on the manifold', verdict:'MONITORING', vc:'#46e0c0', fallen:false,
+      st:{mmwave:'agree',cband:'agree',uwb:'agree',wifi:'agree',mesh:'agree',subghz:'agree'}, faint:true },
+    { name:'fall', sub:'event corroborated across bands', verdict:'FALL · CONFIRMED', vc:'#cfaa5b', fallen:true,
+      st:{mmwave:'agree',cband:'agree',uwb:'agree',wifi:'agree',mesh:'agree',subghz:'idle'} },
+    { name:'spoof', sub:'Wi-Fi off-manifold — low trust can’t veto', verdict:'SPOOF FLAGGED', vc:'#f5b13d', fallen:true,
+      st:{mmwave:'agree',cband:'agree',uwb:'agree',wifi:'contradict',mesh:'agree',subghz:'idle'} },
+    { name:'fault', sub:'mmWave silent — coverage degraded, bar lowered', verdict:'FAULT · FAIL-LOUD', vc:'#ff5a52', fallen:false,
+      st:{mmwave:'dead',cband:'agree',uwb:'agree',wifi:'agree',mesh:'agree',subghz:'agree'} },
+  ];
+  let si=0, sT=0, last=performance.now();
+  function area(){ const TOP=116, BOT=44; const cx=W/2, cy=TOP+(H-TOP-BOT)/2;
+    const rw=Math.min(W*0.30, 280), rh=Math.min((H-TOP-BOT)*0.56, 200);
+    const rxN=Math.min(rw+46, W/2-52), ryN=Math.min(rh+46, (H-TOP-BOT)/2-34);
+    return {cx,cy,rw,rh,rxN,ryN,TOP,BOT}; }
+  function frame(now){ requestAnimationFrame(frame); let dt=(now-last)/1000; last=now; if(dt>0.05)dt=0.05;
+    sT+=dt; if(sT>3.8){ sT=0; si=(si+1)%SCN.length; } const scn=SCN[si];
+    const a=area(); x.clearRect(0,0,W,H);
+    // room
+    x.strokeStyle='rgba(207,170,91,0.3)'; x.lineWidth=1.5; x.beginPath(); x.roundRect(a.cx-a.rw, a.cy-a.rh, a.rw*2, a.rh*2, 14); x.stroke();
+    x.fillStyle='rgba(207,170,91,0.03)'; x.fill();
+    x.fillStyle='#6f7da0'; x.font='10px '+getComputedStyle(document.body).fontFamily; x.textAlign='left'; x.fillText('ROOM · per-zone fabric', a.cx-a.rw+10, a.cy-a.rh+16);
+    // subject
+    const sx=a.cx, sy=scn.fallen? a.cy+a.rh*0.4 : a.cy; const sr=scn.fallen?7:9;
+    // band nodes around the room
+    let live=0;
+    BANDS.forEach((b,i)=>{ const ang=i/BANDS.length*Math.PI*2;   // start at 0 (right) → top/bottom centers stay free
+      const bx=a.cx+Math.cos(ang)*a.rxN, by=a.cy+Math.sin(ang)*a.ryN;
+      const stt=scn.st[b.id]; const dead = stt==='dead'; if(!dead) live++;
+      // signal line to subject
+      if(stt==='agree'){ const pulse=(sT*1.6 + i*0.2)%1;
+        x.strokeStyle=scn.faint? b.c+'44' : b.c+'cc'; x.lineWidth=scn.faint?1:1.8; x.beginPath(); x.moveTo(bx,by); x.lineTo(sx,sy); x.stroke();
+        if(!scn.faint){ const px=bx+(sx-bx)*pulse, py=by+(sy-by)*pulse; x.beginPath(); x.arc(px,py,2.6,0,6.28); x.fillStyle=b.c; x.fill(); } }
+      else if(stt==='contradict'){ x.strokeStyle='#ff5a52'; x.lineWidth=1.8; x.setLineDash([5,5]); x.beginPath(); x.moveTo(bx,by); x.lineTo(sx,sy); x.stroke(); x.setLineDash([]); }
+      // node marker
+      const r=b.trust==='high'?9:7;
+      x.beginPath(); x.arc(bx,by,r,0,6.28); x.fillStyle=dead?'#2a3550':b.c+'cc'; x.fill();
+      if(b.trust==='high'){ x.beginPath(); x.arc(bx,by,r+3,0,6.28); x.strokeStyle=dead?'#3a4560':b.c; x.lineWidth=1.5; x.stroke(); }
+      if(stt==='contradict'){ x.beginPath(); x.arc(bx,by,r+5,0,6.28); x.strokeStyle='#ff5a52'; x.lineWidth=1.5; x.stroke(); }
+      x.fillStyle=dead?'#5b6a8a':'#cdd6ea'; x.font='9px '+getComputedStyle(document.body).fontFamily; x.textAlign='center';
+      x.fillText(b.s + (dead?' ·DEAD':(stt==='contradict'?' ·OFF':'')), bx, by+r+13);
+    });
+    // subject
+    x.beginPath(); x.arc(sx,sy,sr,0,6.28); x.fillStyle=scn.fallen?'#ff9e6e':'#eef1f8'; x.fill();
+    x.fillStyle='#8aa0bd'; x.font='10px '+getComputedStyle(document.body).fontFamily; x.textAlign='center'; x.fillText(scn.fallen?'subject · down':'subject', sx, sy+sr+14);
+    // verdict banner over room
+    x.fillStyle=scn.vc; x.font='600 18px '+getComputedStyle(document.body).fontFamily; x.textAlign='center'; x.textBaseline='alphabetic';
+    x.fillText(scn.verdict, a.cx, a.cy - a.ryN*0.87 - 20);
+    document.getElementById('s-sub').textContent=scn.sub;
+    document.getElementById('s-v').innerHTML='<span style="color:'+scn.vc+'">'+scn.verdict+'</span>';
+    document.getElementById('s-b').textContent=live+' / 6';
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

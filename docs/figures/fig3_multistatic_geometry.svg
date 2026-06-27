@@ -1,0 +1,12 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="1280" height="720" fill="#FFFFFF"/>
+<text x="80" y="84" font-family="Arial,sans-serif" font-size="44" font-weight="500" fill="#2C2C2A">Multistatic aspect diversity</text>
+<text x="80" y="126" font-family="Arial,sans-serif" font-size="24" fill="#5F5E5A">separated nodes &#8594; shadow from one is lit by another</text>
+<rect x="300" y="170" width="680" height="470" rx="16" fill="#FAFAF8" stroke="#B4B2A9" stroke-width="2"/>
+<g font-family="Arial,sans-serif">
+<line x1="360" y1="240" x2="615" y2="395" stroke="#378ADD" stroke-width="2.5"/><line x1="920" y1="240" x2="665" y2="395" stroke="#378ADD" stroke-width="2.5"/><line x1="360" y1="570" x2="615" y2="425" stroke="#378ADD" stroke-width="2.5"/><line x1="920" y1="570" x2="665" y2="425" stroke="#D85A30" stroke-width="2.5" stroke-dasharray="9 8"/>
+<rect x="740" y="450" width="120" height="120" rx="8" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="2"/><text x="800" y="516" font-size="18" fill="#5F5E5A" text-anchor="middle">obstacle</text>
+<circle cx="640" cy="410" r="40" fill="#FAECE7" stroke="#D85A30" stroke-width="2.5"/><text x="640" y="416" font-size="20" font-weight="500" fill="#993C1D" text-anchor="middle">body</text>
+<circle cx="360" cy="240" r="22" fill="#E6F1FB" stroke="#378ADD" stroke-width="2.5"/><circle cx="920" cy="240" r="22" fill="#E6F1FB" stroke="#378ADD" stroke-width="2.5"/><circle cx="360" cy="570" r="22" fill="#E6F1FB" stroke="#378ADD" stroke-width="2.5"/><circle cx="920" cy="570" r="22" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="2.5"/>
+<text x="360" y="214" font-size="20" fill="#185FA5" text-anchor="middle">node A</text><text x="920" y="214" font-size="20" fill="#185FA5" text-anchor="middle">node B</text><text x="360" y="612" font-size="20" fill="#185FA5" text-anchor="middle">node C</text><text x="920" y="612" font-size="20" fill="#5F5E5A" text-anchor="middle">node D (shadowed)</text>
+<text x="1010" y="430" font-size="22" fill="#0F6E56">A &#183; B &#183; C see</text><text x="1010" y="462" font-size="22" fill="#0F6E56">the body</text><text x="1010" y="520" font-size="22" fill="#993C1D">D blocked by</text><text x="1010" y="552" font-size="22" fill="#993C1D">obstacle</text>
+</g></svg>

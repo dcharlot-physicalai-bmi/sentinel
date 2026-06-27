@@ -1,0 +1,10 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="1280" height="720" fill="#FFFFFF"/>
+<text x="80" y="84" font-family="Arial,sans-serif" font-size="44" font-weight="500" fill="#2C2C2A">Three tiers, one direction</text>
+<g font-family="Arial,sans-serif">
+<rect x="80" y="120" width="1120" height="132" rx="20" fill="#E1F5EE" stroke="#1D9E75" stroke-width="2"/><text x="112" y="172" font-size="30" font-weight="500" fill="#0F6E56">Tier 1 &#8212; source nodes</text><text x="112" y="208" font-size="22" fill="#0F6E56">sensor + local DSP + intelligence + heartbeat &#183; process signal at the edge</text>
+<text x="640" y="290" font-size="22" fill="#5F5E5A" text-anchor="middle">estimates + events</text><line x1="640" y1="252" x2="640" y2="306" stroke="#888780" stroke-width="2.5"/><polygon points="640,308 633,294 647,294" fill="#888780"/>
+<rect x="80" y="318" width="1120" height="132" rx="20" fill="#EAF3DE" stroke="#639922" stroke-width="2"/><text x="112" y="370" font-size="30" font-weight="500" fill="#27500A">Tier 2 &#8212; coherent combine</text><text x="112" y="406" font-size="22" fill="#27500A">whole-home aperture pipelined across tile FPGAs &#183; never raw antennas to the hub</text>
+<text x="640" y="488" font-size="22" fill="#5F5E5A" text-anchor="middle">fused meaning</text><line x1="640" y1="450" x2="640" y2="504" stroke="#888780" stroke-width="2.5"/><polygon points="640,506 633,492 647,492" fill="#888780"/>
+<rect x="80" y="516" width="1120" height="132" rx="20" fill="#EEEDFE" stroke="#7F77DD" stroke-width="2"/><text x="112" y="568" font-size="30" font-weight="500" fill="#3C3489">Tier 3 &#8212; the hub</text><text x="112" y="604" font-size="22" fill="#3C3489">fuse &#183; decide &#183; remember &#183; act &#183; thin by design &#8212; Pi 5 / Tachyon &#183; edge-local &#183; fail-loud</text>
+<text x="640" y="694" font-size="22" fill="#5F5E5A" text-anchor="middle">decision &#8594; advisory uplink &#183; dispatch</text><line x1="640" y1="648" x2="640" y2="676" stroke="#888780" stroke-width="2.5"/><polygon points="640,678 633,664 647,664" fill="#888780"/>
+</g></svg>

@@ -1,0 +1,78 @@
+# ESPHome config for a Seeed MR60FDA2 (fall) node -> mosquitto on the fusion box.
+# Flash one per mmWave node; set node_id + zone to match config/nodes.yaml.
+# The Seeed kit ships ESPHome-ready; this adds heartbeat + raw-ish telemetry
+# publishing on the schema in TOPICS.md instead of (or alongside) Home Assistant.
+
+substitutions:
+  node_id: "MW-03"
+  zone: "bathroom"
+  hb_ms: "2000"
+
+esphome:
+  name: ${node_id}
+
+esp32:
+  board: esp32-c6-devkitc-1
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pw
+
+mqtt:
+  broker: 10.0.0.10          # FUS-01
+  discovery: false
+  topic_prefix: sensor/${node_id}
+
+# Seeed 60GHz MR60FDA2 over UART (fall + presence). Component name per the
+# Seeed ESPHome external component (seeed_mr60fda2).
+uart:
+  rx_pin: GPIO17
+  tx_pin: GPIO16
+  baud_rate: 115200
+
+external_components:
+  - source: github://limengdu/MR60FDA2_eebd_MagicHome   # Seeed's component
+    components: [seeed_mr60fda2]
+
+seeed_mr60fda2:
+  id: radar
+
+binary_sensor:
+  - platform: seeed_mr60fda2
+    seeed_mr60fda2_id: radar
+    is_fall:
+      name: fall
+      # publish a discrete sensor-side event on the schema topic
+      on_press:
+        - mqtt.publish:
+            topic: sensor/${node_id}/event
+            payload: !lambda |-
+              return "{\"node_id\":\"${node_id}\",\"band\":\"mmwave\",\"kind\":\"fall_candidate\",\"on_floor\":true,\"conf\":0.7,\"t_src\":" + to_string(millis()) + "}";
+    has_target:
+      name: presence
+
+# periodic telemetry (occupancy + coarse velocity if exposed)
+interval:
+  - interval: 250ms
+    then:
+      - mqtt.publish:
+          topic: sensor/${node_id}/telemetry
+          payload: !lambda |-
+            return "{\"node_id\":\"${node_id}\",\"band\":\"mmwave\",\"occupancy\":" +
+              to_string(id(radar_presence).state ? 1 : 0) + ",\"t_src\":" + to_string(millis()) + "}";
+
+# heartbeat — the fail-loud spine. key_epoch is a monotonic counter in v0
+# (becomes the keyed-waveform epoch in production). A frozen counter == fault.
+  - interval: ${hb_ms}ms
+    then:
+      - mqtt.publish:
+          topic: sensor/${node_id}/heartbeat
+          payload: !lambda |-
+            static uint32_t seq = 0; seq++;
+            return "{\"node_id\":\"${node_id}\",\"seq\":" + to_string(seq) +
+              ",\"key_epoch\":" + to_string(seq) + ",\"t_src\":" + to_string(millis()) + "}";
+
+globals:
+  - id: radar_presence
+    type: bool
+    initial_value: "false"

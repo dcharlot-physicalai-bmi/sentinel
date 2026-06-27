@@ -1,0 +1,86 @@
+# Node registry — mirrors the install schedule. Fusion loads this to know
+# which bands cover which zone (drives the manifold corroboration check) and
+# what heartbeat cadence to expect (drives the fail-loud watchdog).
+
+zones:
+  bedside:    {tier: critical, rooms: [primary_br]}
+  bathroom:   {tier: critical, rooms: [bathroom], no_camera: true}
+  shower:     {tier: critical, rooms: [bathroom], no_camera: true}
+  living_seat: {tier: critical, rooms: [living]}
+  kitchen:    {tier: critical, rooms: [kitchen]}
+  hallway:    {tier: transit,  rooms: [hallway]}
+  bedroom2:   {tier: transit,  rooms: [bedroom2]}
+
+# hb_grace = miss this many intervals -> DEAD (fault). 2.5 = tolerant of one drop.
+defaults: {hb_grace: 2.5}
+
+# Per-band trust weight in [0,1]: how hard the band is to forge. Drives evidence
+# weighting AND the spoof veto — only a HIGH-trust band contradicting a primary
+# can flag spoof; a low-trust band (jammable CSI) may add support but must never
+# veto a real event (inverted error budget: don't let a spoofable band cause a
+# false negative). Owned keyed-coherent + authenticated bands are high; passive
+# ambient-readout bands are low.
+band_trust:
+  mmwave: 1.0   # owned keyed FMCW (prod), 60GHz, short-range, no penetration
+  cband:  1.0   # owned coherent keyed waveform, through-wall corroborator
+  uwb:    0.9   # 802.15.4z secure ranging (STS) = authenticated distance
+  camera: 0.7   # spoofable by feed injection, but a different attack surface
+  wifi:   0.5   # passive 5/6GHz CSI, jammable + injectable
+  mesh:   0.5   # zigbee/thread link-graph RTI, coarse tomographic shadow
+  subghz: 0.4   # 900MHz, deep-penetrating but coarse, perimeter/whole-home
+  ble:    0.4   # identity axis (who); spoofable unless secure ranging
+
+nodes:
+  # mmwave
+  - {id: MW-01, band: mmwave, zone: bedside,     caps: [fall,presence],    hb_ms: 2000}
+  - {id: MW-02, band: mmwave, zone: bedside,     caps: [vitals],           hb_ms: 2000}
+  - {id: MW-03, band: mmwave, zone: bathroom,    caps: [fall,presence],    hb_ms: 2000}
+  - {id: MW-04, band: mmwave, zone: shower,      caps: [fall,presence],    hb_ms: 2000}
+  - {id: MW-05, band: mmwave, zone: bedroom2,    caps: [fall,presence],    hb_ms: 2000}
+  - {id: MW-06, band: mmwave, zone: bedroom2,    caps: [vitals],           hb_ms: 2000}
+  - {id: MW-07, band: mmwave, zone: hallway,     caps: [fall,presence],    hb_ms: 2000}
+  - {id: MW-08, band: mmwave, zone: living_seat, caps: [fall,presence],    hb_ms: 2000}
+  - {id: MW-09, band: mmwave, zone: living_seat, caps: [fall,presence],    hb_ms: 2000}
+  - {id: MW-10, band: mmwave, zone: living_seat, caps: [vitals],           hb_ms: 2000}
+  - {id: MW-11, band: mmwave, zone: kitchen,     caps: [fall,presence],    hb_ms: 2000}
+  - {id: MW-12, band: mmwave, zone: hallway,     caps: [fall,presence],    hb_ms: 2000}
+  # uwb
+  - {id: UW-01, band: uwb, zone: bedside,     caps: [presence,range], hb_ms: 1000}
+  - {id: UW-02, band: uwb, zone: shower,      caps: [presence,range], hb_ms: 1000}
+  - {id: UW-03, band: uwb, zone: bedroom2,    caps: [presence,range], hb_ms: 1000}
+  - {id: UW-04, band: uwb, zone: hallway,     caps: [presence,range], hb_ms: 1000}
+  - {id: UW-05, band: uwb, zone: living_seat, caps: [presence,range], hb_ms: 1000}
+  - {id: UW-06, band: uwb, zone: kitchen,     caps: [presence,range], hb_ms: 1000}
+  - {id: UW-07, band: uwb, zone: kitchen,     caps: [presence,range], hb_ms: 1000}
+  - {id: UW-08, band: uwb, zone: hallway,     caps: [presence,range], hb_ms: 1000}
+  # cband (through-wall corroborator)
+  - {id: CB-01, band: cband, zone: bedside,     caps: [presence,vitals], hb_ms: 1000}
+  - {id: CB-02, band: cband, zone: bedroom2,    caps: [presence,vitals], hb_ms: 1000}
+  - {id: CB-03, band: cband, zone: bathroom,    caps: [presence,vitals], hb_ms: 1000}
+  - {id: CB-04, band: cband, zone: kitchen,     caps: [presence,vitals], hb_ms: 1000}
+  # camera (non-private only)
+  - {id: CAM-01, band: camera, zone: living_seat, caps: [pose,identity], hb_ms: 1000}
+  - {id: CAM-02, band: camera, zone: hallway,     caps: [pose,identity], hb_ms: 1000}
+  # wifi CSI (5/6 GHz, passive device-free motion/presence/coarse breathing) —
+  # we own the APs, so this is emitted on purpose, not scavenged.
+  - {id: WF-01, band: wifi, zone: bedside,     caps: [presence,motion,breathing_coarse], hb_ms: 1000}
+  - {id: WF-02, band: wifi, zone: bathroom,    caps: [presence,motion],                  hb_ms: 1000}
+  - {id: WF-03, band: wifi, zone: living_seat, caps: [presence,motion,breathing_coarse], hb_ms: 1000}
+  - {id: WF-04, band: wifi, zone: kitchen,     caps: [presence,motion],                  hb_ms: 1000}
+  - {id: WF-05, band: wifi, zone: bedroom2,    caps: [presence,motion],                  hb_ms: 1000}
+  # BLE (2.4 GHz) — identity + device ranging (who/where), Channel Sounding.
+  # Feeds occupant assignment; coarse presence as a side effect.
+  - {id: BL-01, band: ble, zone: bedside,     caps: [identity,range,presence], hb_ms: 1000}
+  - {id: BL-02, band: ble, zone: living_seat, caps: [identity,range,presence], hb_ms: 1000}
+  - {id: BL-03, band: ble, zone: hallway,     caps: [identity,range,presence], hb_ms: 1000}
+  - {id: BL-04, band: ble, zone: kitchen,     caps: [identity,range,presence], hb_ms: 1000}
+  # Zigbee/Thread mesh RTI — radio-tomographic shadow from link-quality across
+  # the existing smart-device mesh. The GRAPH senses, not any single node; we
+  # model one virtual RTI sensor per zone fed by the mesh link matrix.
+  - {id: ME-01, band: mesh, zone: living_seat, caps: [presence_tomographic], hb_ms: 2000}
+  - {id: ME-02, band: mesh, zone: kitchen,     caps: [presence_tomographic], hb_ms: 2000}
+  - {id: ME-03, band: mesh, zone: hallway,     caps: [presence_tomographic], hb_ms: 2000}
+  # sub-GHz (900 MHz ISM) — deep-penetrating coarse presence; whole-home +
+  # perimeter. Few nodes, long range, sees through everything but coarsely.
+  - {id: SG-01, band: subghz, zone: hallway, caps: [presence_coarse,perimeter], hb_ms: 2000}
+  - {id: SG-02, band: subghz, zone: kitchen, caps: [presence_coarse,perimeter], hb_ms: 2000}
